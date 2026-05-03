@@ -3,6 +3,7 @@ import { BookOpen, ArrowRight, CheckCircle2, XCircle } from 'lucide-react';
 import { VocabItem, Definition, QuizMode } from '../types';
 import { Translations } from '../translations';
 import { getBaseForms } from '../utils';
+import { getDiff } from '../diff';
 
 interface QuizProps {
     currentItem: VocabItem | undefined;
@@ -106,7 +107,11 @@ const Quiz: React.FC<QuizProps> = ({
                                                     <span className="text-indigo-600 relative top-1">{part}</span>
                                                 ) : (
                                                     <span className="inline-flex flex-col items-center justify-end leading-tight bottom-0 relative">
-                                                        <span className="text-red-500 line-through text-xs mb-1 opacity-70 whitespace-nowrap">{selectedAnswer}</span>
+                                                        <span className="text-red-500 line-through text-xs mb-1 opacity-70 whitespace-nowrap">
+                                                            {getDiff(selectedAnswer, correctAnswer).map((d, i) => (
+                                                                <span key={i} className={d.type !== 'match' ? 'bg-red-200' : ''}>{d.char}</span>
+                                                            ))}
+                                                        </span>
                                                         <span className="text-indigo-600 font-bold whitespace-nowrap">{part}</span>
                                                     </span>
                                                 )
