@@ -85,6 +85,7 @@ export default function App() {
     const [reviewStack, setReviewStack] = useState<VocabItem[]>([]);
     const [fullQuizReviewHistory, setFullQuizReviewHistory] = useState<VocabItem[]>([]);
     const [reviewSessionItems, setReviewSessionItems] = useState<VocabItem[]>([]);
+    const [preselectedQuizItems, setPreselectedQuizItems] = useState<VocabItem[] | null>(null);
     const [reviewReturnState, setReviewReturnState] = useState<AppState>('RESULTS');
     const [isReviewingFullHistory, setIsReviewingFullHistory] = useState(false);
     const [isAddedToStack, setIsAddedToStack] = useState(false);
@@ -147,7 +148,7 @@ export default function App() {
     };
 
     const startQuiz = (mode: QuizMode) => {
-        let itemsInRange = vocabularyList.filter(item => {
+        let itemsInRange = preselectedQuizItems || vocabularyList.filter(item => {
             const start = Number(quizRange.start) || 1;
             const end = Number(quizRange.end) || 999999;
             return item.id >= start && item.id <= end;
@@ -172,6 +173,7 @@ export default function App() {
         setFailedItems([]);
         setReviewStack([]);
         setFullQuizReviewHistory([]);
+        setPreselectedQuizItems(null);
         setAppState('QUIZ');
     };
 
@@ -285,14 +287,14 @@ export default function App() {
         if (!currentReviewItem) return;
 
         const isJpToEn = quizMode.startsWith('JP_TO_EN');
-        const questionTemplate = isJpToEn ? currentReviewItem.english_text : currentReviewItem.japanese_text;  
+        const questionTemplate = isJpToEn ? currentReviewItem.english_text : currentReviewItem.japanese_text;
         const correctMatch = questionTemplate.match(/{{(.*?)}}/);
         const correctAnswer = correctMatch ? correctMatch[1].trim() : "";
         const isCorrect = reviewInput.trim().toLowerCase() === correctAnswer.toLowerCase();
 
         if (isCorrect) {
             if (isReviewingFullHistory) {
-                setFullQuizReviewHistory(prev => prev.filter(item => item.id !== currentReviewItem.id));       
+                setFullQuizReviewHistory(prev => prev.filter(item => item.id !== currentReviewItem.id));
             } else {
                 setReviewStack(prev => prev.filter(item => item.id !== currentReviewItem.id));
             }
@@ -312,7 +314,8 @@ export default function App() {
         nextReviewQuestion();
     };
 
-    const nextReviewQuestion = () => {        if (reviewIdx < reviewSessionItems.length - 1) {
+    const nextReviewQuestion = () => {
+        if (reviewIdx < reviewSessionItems.length - 1) {
             setReviewIdx(reviewIdx + 1);
             setReviewInput('');
             setIsReviewRevealed(false);
@@ -405,189 +408,180 @@ export default function App() {
     return (
         <ErrorBoundary>
             <div className="min-h-screen flex flex-col bg-[#FDFDFD] text-slate-900 font-sans overflow-hidden">
-            <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-100 bg-white">
-                <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAppState('HISTORY')}>
-                    <div className="w-8 h-8 flex-shrink-0 bg-indigo-600 rounded-lg flex items-center justify-center">
-                        <BookOpen className="w-5 h-5 text-white" />
+                <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-100 bg-white">
+                    <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAppState('HISTORY')}>
+                        <div className="w-8 h-8 flex-shrink-0 bg-indigo-600 rounded-lg flex items-center justify-center">
+                            <BookOpen className="w-5 h-5 text-white" />
+                        </div>
+                        <h1 className="text-xl font-semibold tracking-tight hidden sm:block">{loc.vocab_quiz}</h1>
                     </div>
-                    <h1 className="text-xl font-semibold tracking-tight hidden sm:block">{loc.vocab_quiz}</h1>
-                </div>
 
-                <div className="flex gap-2 sm:gap-4 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0">
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-full text-xs font-semibold shrink-0">
-                        <button onClick={() => setLang('en')} className={`px-2 py-1 rounded-full ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>EN</button>
-                        <button onClick={() => setLang('ja')} className={`px-2 py-1 rounded-full ${lang === 'ja' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>JA</button>
+                    <div className="flex gap-2 sm:gap-4 overflow-x-auto no-scrollbar max-w-full pb-1 sm:pb-0">
+                        <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-full text-xs font-semibold shrink-0">
+                            <button onClick={() => setLang('en')} className={`px-2 py-1 rounded-full ${lang === 'en' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>EN</button>
+                            <button onClick={() => setLang('ja')} className={`px-2 py-1 rounded-full ${lang === 'ja' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'}`}>JA</button>
+                        </div>
+                        <button onClick={() => setAppState('HISTORY')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.vocab_db}</button>
+                        <button onClick={() => setAppState('DICTIONARY')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.dictionary}</button>
+                        <button onClick={() => setAppState('WEAK_WORDS')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.mistake_history}</button>
                     </div>
-                    <button onClick={() => setAppState('HISTORY')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.vocab_db}</button>
-                    <button onClick={() => setAppState('DICTIONARY')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.dictionary}</button>
-                    <button onClick={() => setAppState('WEAK_WORDS')} className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium border border-slate-200 rounded-full hover:bg-slate-50 transition-colors whitespace-nowrap shrink-0">{loc.mistake_history}</button>
-                </div>
-            </header>
+                </header>
 
-            <main className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto animate-in fade-in duration-500 pb-12 relative">
-                {appState === 'WELCOME' && (
-                    <Welcome
-                        vocabularyList={vocabularyList}
-                        definitions={definitions}
-                        loc={loc}
-                        importVocabRef={importVocabRef}
-                        importDictRef={importDictRef}
-                        handleImportVocab={handleImportVocab}
-                        handleImportDict={handleImportDict}
-                        setAppState={setAppState}
-                    />
-                )}
-                {appState === 'HISTORY' && (
-                    <History
-                        vocabularyList={vocabularyList}
-                        loc={loc}
-                        importVocabRef={importVocabRef}
-                        handleImportVocab={handleImportVocab}
-                        handleClearVocabData={handleClearVocabData}
-                        setAddingVocab={setAddingVocab}
-                        setEditingItem={setEditingItem}
-                        deleteItem={deleteItem}
-                        startQuizModeSelection={startQuizModeSelection}
-                    />
-                )}
-                {appState === 'WEAK_WORDS' && (
-                    <WeakWords
-                        mistakeHistory={mistakeHistory}
-                        vocabularyList={vocabularyList}
-                        loc={loc}
-                        setMistakeHistory={setMistakeHistory}
-                        startQuizFromWeakWords={(items) => {
-                            setQuizItems(items);
-                            setQuizMode('JP_TO_EN');
-                            setCurrentQuestionIdx(0);
-                            setScore(0);
-                            setSelectedAnswer(null);
-                            setQuizInput('');
-                            setIsAnswerCorrect(null);
-                            setFailedItems([]);
-                            setReviewStack([]);
-                            setFullQuizReviewHistory([]);
-                            setAppState('QUIZ');
-                        }}
-                        definitions={definitions}
-                    />
-                )}
-                {appState === 'DICTIONARY' && (
-                    <Dictionary
-                        definitions={definitions}
-                        loc={loc}
-                        importDictRef={importDictRef}
-                        handleImportDict={handleImportDict}
-                        handleClearDictData={handleClearDictData}
-                        setAddingDef={setAddingDef}
-                        setEditingDef={setEditingDef}
-                        deleteDef={(id) => setDefinitions(prev => prev.filter(d => d.id !== id))}
-                    />
-                )}
-                {appState === 'QUIZ_SELECT' && (
-                    <QuizSelect
-                        loc={loc}
-                        quizRange={quizRange}
-                        setQuizRange={setQuizRange}
-                        isRandomOrder={isRandomOrder}
-                        setIsRandomOrder={setIsRandomOrder}
-                        showAdvancedQuizOpts={showAdvancedQuizOpts}
-                        setShowAdvancedQuizOpts={setShowAdvancedQuizOpts}
-                        quizMaxCount={quizMaxCount}
-                        setQuizMaxCount={setQuizMaxCount}
-                        quizBreakInterval={quizBreakInterval}
-                        setQuizBreakInterval={setQuizBreakInterval}
-                        startQuiz={startQuiz}
-                        resetApp={() => setAppState('HISTORY')}
-                    />
-                )}
-                {appState === 'QUIZ' && (
-                    <Quiz
-                        currentItem={quizItems[currentQuestionIdx]}
-                        quizMode={quizMode}
-                        currentQuestionIdx={currentQuestionIdx}
-                        quizItems={quizItems}
-                        loc={loc}
-                        selectedAnswer={selectedAnswer}
-                        isAnswerCorrect={isAnswerCorrect}
-                        quizInput={quizInput}
-                        setQuizInput={setQuizInput}
-                        handleAnswerSelect={handleAnswerSelect}
-                        shuffledOptions={shuffledOptions}
-                        definitions={definitions}
-                        nextActionRef={nextActionRef}
-                        toggleStack={toggleStack}
-                        isAddedToStack={isAddedToStack}
-                        nextQuestion={nextQuestion}
-                    />
-                )}
-                {appState === 'QUIZ_BREAK' && (
-                    <QuizBreak
-                        loc={loc}
-                        currentQuestionIdx={currentQuestionIdx}
-                        quizItems={quizItems}
-                        score={score}
-                        advanceToNextQuestion={advanceToNextQuestion}
-                        reviewStack={reviewStack}
-                        fullQuizReviewHistory={fullQuizReviewHistory}
-                        startReview={startReview}
-                        setAppState={setAppState}
-                    />
-                )}
-                {appState === 'RESULTS' && (
-                    <Results
-                        score={score}
-                        quizItems={quizItems}
-                        loc={loc}
-                        startQuizModeSelection={startQuizModeSelection}
-                        failedItems={failedItems}
-                        retryMistakes={() => {
-                            setQuizItems(failedItems);
-                            setCurrentQuestionIdx(0);
-                            setScore(0);
-                            setSelectedAnswer(null);
-                            setIsAnswerCorrect(null);
-                            setFailedItems([]);
-                            setAppState('QUIZ');
-                        }}
-                        setAppState={setAppState}
-                        fullQuizReviewHistory={fullQuizReviewHistory}
-                        startReview={startReview}
-                    />
-                )}
-                {appState === 'QUIZ_REVIEW' && (
-                    <Review
-                        currentReviewItem={reviewSessionItems[reviewIdx]}
-                        quizMode={quizMode}
-                        reviewIdx={reviewIdx}
-                        reviewSessionItems={reviewSessionItems}
-                        isReviewRevealed={isReviewRevealed}
-                        reviewInput={reviewInput}
-                        setReviewInput={setReviewInput}
-                        handleReviewCheck={handleReviewCheck}
-                        handleReviewSkip={handleReviewSkip}
-                        nextReviewQuestion={nextReviewQuestion}
-                        loc={loc}
-                    />
-                )}
-            </main>
+                <main className="flex-1 overflow-y-auto w-full max-w-5xl mx-auto animate-in fade-in duration-500 pb-12 relative">
+                    {appState === 'WELCOME' && (
+                        <Welcome
+                            vocabularyList={vocabularyList}
+                            definitions={definitions}
+                            loc={loc}
+                            importVocabRef={importVocabRef}
+                            importDictRef={importDictRef}
+                            handleImportVocab={handleImportVocab}
+                            handleImportDict={handleImportDict}
+                            setAppState={setAppState}
+                        />
+                    )}
+                    {appState === 'HISTORY' && (
+                        <History
+                            vocabularyList={vocabularyList}
+                            loc={loc}
+                            importVocabRef={importVocabRef}
+                            handleImportVocab={handleImportVocab}
+                            handleClearVocabData={handleClearVocabData}
+                            setAddingVocab={setAddingVocab}
+                            setEditingItem={setEditingItem}
+                            deleteItem={deleteItem}
+                            startQuizModeSelection={startQuizModeSelection}
+                        />
+                    )}
+                    {appState === 'WEAK_WORDS' && (
+                        <WeakWords
+                            mistakeHistory={mistakeHistory}
+                            vocabularyList={vocabularyList}
+                            loc={loc}
+                            setMistakeHistory={setMistakeHistory}
+                            startQuizFromWeakWords={(items) => {
+                                setPreselectedQuizItems(items);
+                                setAppState('QUIZ_SELECT');
+                            }}
+                            definitions={definitions}
+                        />
+                    )}
+                    {appState === 'DICTIONARY' && (
+                        <Dictionary
+                            definitions={definitions}
+                            loc={loc}
+                            importDictRef={importDictRef}
+                            handleImportDict={handleImportDict}
+                            handleClearDictData={handleClearDictData}
+                            setAddingDef={setAddingDef}
+                            setEditingDef={setEditingDef}
+                            deleteDef={(id) => setDefinitions(prev => prev.filter(d => d.id !== id))}
+                        />
+                    )}
+                    {appState === 'QUIZ_SELECT' && (
+                        <QuizSelect
+                            loc={loc}
+                            quizRange={quizRange}
+                            setQuizRange={setQuizRange}
+                            isRandomOrder={isRandomOrder}
+                            setIsRandomOrder={setIsRandomOrder}
+                            showAdvancedQuizOpts={showAdvancedQuizOpts}
+                            setShowAdvancedQuizOpts={setShowAdvancedQuizOpts}
+                            quizMaxCount={quizMaxCount}
+                            setQuizMaxCount={setQuizMaxCount}
+                            quizBreakInterval={quizBreakInterval}
+                            setQuizBreakInterval={setQuizBreakInterval}
+                            startQuiz={startQuiz}
+                            resetApp={() => setAppState('HISTORY')}
+                        />
+                    )}
+                    {appState === 'QUIZ' && (
+                        <Quiz
+                            currentItem={quizItems[currentQuestionIdx]}
+                            quizMode={quizMode}
+                            currentQuestionIdx={currentQuestionIdx}
+                            quizItems={quizItems}
+                            loc={loc}
+                            selectedAnswer={selectedAnswer}
+                            isAnswerCorrect={isAnswerCorrect}
+                            quizInput={quizInput}
+                            setQuizInput={setQuizInput}
+                            handleAnswerSelect={handleAnswerSelect}
+                            shuffledOptions={shuffledOptions}
+                            definitions={definitions}
+                            nextActionRef={nextActionRef}
+                            toggleStack={toggleStack}
+                            isAddedToStack={isAddedToStack}
+                            nextQuestion={nextQuestion}
+                        />
+                    )}
+                    {appState === 'QUIZ_BREAK' && (
+                        <QuizBreak
+                            loc={loc}
+                            currentQuestionIdx={currentQuestionIdx}
+                            quizItems={quizItems}
+                            score={score}
+                            advanceToNextQuestion={advanceToNextQuestion}
+                            reviewStack={reviewStack}
+                            fullQuizReviewHistory={fullQuizReviewHistory}
+                            startReview={startReview}
+                            setAppState={setAppState}
+                        />
+                    )}
+                    {appState === 'RESULTS' && (
+                        <Results
+                            score={score}
+                            quizItems={quizItems}
+                            loc={loc}
+                            startQuizModeSelection={startQuizModeSelection}
+                            failedItems={failedItems}
+                            retryMistakes={() => {
+                                setQuizItems(failedItems);
+                                setCurrentQuestionIdx(0);
+                                setScore(0);
+                                setSelectedAnswer(null);
+                                setIsAnswerCorrect(null);
+                                setFailedItems([]);
+                                setAppState('QUIZ');
+                            }}
+                            setAppState={setAppState}
+                            fullQuizReviewHistory={fullQuizReviewHistory}
+                            startReview={startReview}
+                        />
+                    )}
+                    {appState === 'QUIZ_REVIEW' && (
+                        <Review
+                            currentReviewItem={reviewSessionItems[reviewIdx]}
+                            quizMode={quizMode}
+                            reviewIdx={reviewIdx}
+                            reviewSessionItems={reviewSessionItems}
+                            isReviewRevealed={isReviewRevealed}
+                            reviewInput={reviewInput}
+                            setReviewInput={setReviewInput}
+                            handleReviewCheck={handleReviewCheck}
+                            handleReviewSkip={handleReviewSkip}
+                            nextReviewQuestion={nextReviewQuestion}
+                            loc={loc}
+                        />
+                    )}
+                </main>
 
-            <Modals
-                editingItem={editingItem}
-                setEditingItem={setEditingItem}
-                saveEdit={saveEdit}
-                addingVocab={addingVocab}
-                setAddingVocab={setAddingVocab}
-                saveNewVocab={saveNewVocab}
-                addingDef={addingDef}
-                setAddingDef={setAddingDef}
-                saveNewDef={saveNewDef}
-                editingDef={editingDef}
-                setEditingDef={setEditingDef}
-                saveEditDef={saveEditDef}
-                loc={loc}
-            />
-        </div>
+                <Modals
+                    editingItem={editingItem}
+                    setEditingItem={setEditingItem}
+                    saveEdit={saveEdit}
+                    addingVocab={addingVocab}
+                    setAddingVocab={setAddingVocab}
+                    saveNewVocab={saveNewVocab}
+                    addingDef={addingDef}
+                    setAddingDef={setAddingDef}
+                    saveNewDef={saveNewDef}
+                    editingDef={editingDef}
+                    setEditingDef={setEditingDef}
+                    saveEditDef={saveEditDef}
+                    loc={loc}
+                />
+            </div>
         </ErrorBoundary>
     );
 }
