@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { RefObject, memo } from 'react';
 import { Upload, BookOpen, ArrowRight, Trash2, Download, Plus, Edit2 } from 'lucide-react';
 import { VocabItem } from '../types';
 import { Translations } from '../translations';
@@ -16,6 +16,41 @@ interface HistoryProps {
     startQuizModeSelection: () => void;
 }
 
+const highlightWord = (text: string) => {
+    const parts = text.split(/{{(.*?)}}/);
+    return parts.map((part, index) =>
+        index % 2 === 1 ? <span key={index} className="bg-red-50 text-red-600 border border-red-200 px-1 rounded">{part}</span> : part
+    );
+};
+
+const VocabItemRow = memo(({ item, type, onEdit, onDelete }: { 
+    item: VocabItem, 
+    type: 'en' | 'ja', 
+    onEdit?: (item: VocabItem) => void, 
+    onDelete?: (id: number) => void 
+}) => {
+    if (type === 'en') {
+        return (
+            <div className="group relative border-b border-slate-100 pb-2">
+                <p className="text-lg font-reading">
+                    <span className="text-slate-400 mr-2 text-sm">{item.id}.</span> {highlightWord(item.english_text)}
+                </p>
+            </div>
+        );
+    }
+    return (
+        <div className="group relative flex justify-between border-b border-slate-100 pb-2">
+            <p className="text-lg pr-12">
+                <span className="text-slate-400 mr-2 text-sm">{item.id}.</span> {highlightWord(item.japanese_text)}
+            </p>
+            <div className="absolute right-0 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 bg-white pl-2">
+                <button onClick={() => onEdit?.(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 size={16} /></button>
+                <button onClick={() => onDelete?.(item.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
+            </div>
+        </div>
+    );
+});
+
 const History: React.FC<HistoryProps> = ({
     vocabularyList,
     loc,
@@ -27,13 +62,6 @@ const History: React.FC<HistoryProps> = ({
     deleteItem,
     startQuizModeSelection
 }) => {
-    const highlightWord = (text: string) => {
-        const parts = text.split(/{{(.*?)}}/);
-        return parts.map((part, index) =>
-            index % 2 === 1 ? <span key={index} className="bg-red-50 text-red-600 border border-red-200 px-1 rounded">{part}</span> : part
-        );
-    };
-
     return (
         <div className="max-w-4xl mx-auto py-10 px-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
@@ -109,26 +137,20 @@ const History: React.FC<HistoryProps> = ({
                             <div className="space-y-6">
                                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest sm:mb-4">{loc.en_col}</h3>
                                 {vocabularyList.map((item) => (
-                                    <div key={item.id} className="group relative border-b border-slate-100 pb-2">
-                                        <p className="text-lg font-reading">
-                                            <span className="text-slate-400 mr-2 text-sm">{item.id}.</span> {highlightWord(item.english_text)}
-                                        </p>
-                                    </div>
+                                    <VocabItemRow key={item.id} item={item} type="en" />
                                 ))}
                             </div>
 
                             <div className="space-y-6">
                                 <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest sm:mb-4">{loc.ja_col}</h3>
                                 {vocabularyList.map((item) => (
-                                    <div key={item.id} className="group relative flex justify-between border-b border-slate-100 pb-2">
-                                        <p className="text-lg pr-12">
-                                            <span className="text-slate-400 mr-2 text-sm">{item.id}.</span> {highlightWord(item.japanese_text)}
-                                        </p>
-                                        <div className="absolute right-0 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2 bg-white pl-2">
-                                            <button onClick={() => setEditingItem(item)} className="text-slate-400 hover:text-indigo-600"><Edit2 size={16} /></button>
-                                            <button onClick={() => deleteItem(item.id)} className="text-slate-400 hover:text-red-600"><Trash2 size={16} /></button>
-                                        </div>
-                                    </div>
+                                    <VocabItemRow 
+                                        key={item.id} 
+                                        item={item} 
+                                        type="ja" 
+                                        onEdit={setEditingItem} 
+                                        onDelete={deleteItem} 
+                                    />
                                 ))}
                             </div>
                         </div>

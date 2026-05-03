@@ -15,6 +15,7 @@ import Review from './components/Review';
 import QuizBreak from './components/QuizBreak';
 import WeakWords from './components/WeakWords';
 import Modals from './components/Modals';
+import ErrorBoundary from './components/ErrorBoundary';
 
 export default function App() {
     // Global States
@@ -85,6 +86,7 @@ export default function App() {
     const [fullQuizReviewHistory, setFullQuizReviewHistory] = useState<VocabItem[]>([]);
     const [reviewSessionItems, setReviewSessionItems] = useState<VocabItem[]>([]);
     const [reviewReturnState, setReviewReturnState] = useState<AppState>('RESULTS');
+    const [isReviewingFullHistory, setIsReviewingFullHistory] = useState(false);
     const [isAddedToStack, setIsAddedToStack] = useState(false);
 
     const nextActionRef = useRef<HTMLDivElement>(null);
@@ -269,6 +271,7 @@ export default function App() {
         setReviewInput('');
         setIsReviewRevealed(false);
         setReviewReturnState(returnTo);
+        setIsReviewingFullHistory(useFullHistory);
         setAppState('QUIZ_REVIEW');
     };
 
@@ -282,27 +285,47 @@ export default function App() {
         if (!currentReviewItem) return;
 
         const isJpToEn = quizMode.startsWith('JP_TO_EN');
-        const questionTemplate = isJpToEn ? currentReviewItem.english_text : currentReviewItem.japanese_text;
+        const questionTemplate = isJpToEn ? currentReviewItem.english_text : currentReviewItem.japanese_text;  
         const correctMatch = questionTemplate.match(/{{(.*?)}}/);
         const correctAnswer = correctMatch ? correctMatch[1].trim() : "";
         const isCorrect = reviewInput.trim().toLowerCase() === correctAnswer.toLowerCase();
 
         if (isCorrect) {
-            if (reviewReturnState === 'RESULTS') {
-                setFullQuizReviewHistory(prev => prev.filter(item => item.id !== currentReviewItem.id));
+            if (isReviewingFullHistory) {
+                setFullQuizReviewHistory(prev => prev.filter(item => item.id !== currentReviewItem.id));       
             } else {
                 setReviewStack(prev => prev.filter(item => item.id !== currentReviewItem.id));
             }
         }
     };
 
-    const nextReviewQuestion = () => {
-        if (reviewIdx < reviewSessionItems.length - 1) {
+    const handleReviewSkip = () => {
+        const currentReviewItem = reviewSessionItems[reviewIdx];
+        if (!currentReviewItem) return;
+
+        // Remove from stack even if skipped to allow breaking the loop
+        if (isReviewingFullHistory) {
+            setFullQuizReviewHistory(prev => prev.filter(item => item.id !== currentReviewItem.id));
+        } else {
+            setReviewStack(prev => prev.filter(item => item.id !== currentReviewItem.id));
+        }
+        nextReviewQuestion();
+    };
+
+    const nextReviewQuestion = () => {        if (reviewIdx < reviewSessionItems.length - 1) {
             setReviewIdx(reviewIdx + 1);
             setReviewInput('');
             setIsReviewRevealed(false);
         } else {
-            setAppState(reviewReturnState);
+            const remaining = isReviewingFullHistory ? fullQuizReviewHistory : reviewStack;
+            if (remaining.length > 0) {
+                setReviewSessionItems([...remaining]);
+                setReviewIdx(0);
+                setReviewInput('');
+                setIsReviewRevealed(false);
+            } else {
+                setAppState(reviewReturnState);
+            }
         }
     };
 
@@ -380,7 +403,8 @@ export default function App() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col bg-[#FDFDFD] text-slate-900 font-sans overflow-hidden">
+        <ErrorBoundary>
+            <div className="min-h-screen flex flex-col bg-[#FDFDFD] text-slate-900 font-sans overflow-hidden">
             <header className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-slate-100 bg-white">
                 <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAppState('HISTORY')}>
                     <div className="w-8 h-8 flex-shrink-0 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -505,6 +529,7 @@ export default function App() {
                         score={score}
                         advanceToNextQuestion={advanceToNextQuestion}
                         reviewStack={reviewStack}
+                        fullQuizReviewHistory={fullQuizReviewHistory}
                         startReview={startReview}
                         setAppState={setAppState}
                     />
@@ -540,7 +565,9 @@ export default function App() {
                         reviewInput={reviewInput}
                         setReviewInput={setReviewInput}
                         handleReviewCheck={handleReviewCheck}
+                        handleReviewSkip={handleReviewSkip}
                         nextReviewQuestion={nextReviewQuestion}
+                        loc={loc}
                     />
                 )}
             </main>
@@ -561,5 +588,6 @@ export default function App() {
                 loc={loc}
             />
         </div>
+        </ErrorBoundary>
     );
 }

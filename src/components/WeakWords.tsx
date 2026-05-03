@@ -21,13 +21,13 @@ const WeakWords: React.FC<WeakWordsProps> = ({
     definitions
 }) => {
     const sortedMistakes = Object.entries(mistakeHistory)
-        .map(([idStr, record]) => ({ id: parseInt(idStr), ...record }))
-        .filter(record => record.failCount > 0)
-        .sort((a, b) => b.failCount - a.failCount || b.lastFailedAt - a.lastFailedAt);
+        .map(([idStr, record]) => ({ id: parseInt(idStr), record: record as MistakeRecord }))
+        .filter(entry => entry.record.failCount > 0)
+        .sort((a, b) => b.record.failCount - a.record.failCount || b.record.lastFailedAt - a.record.lastFailedAt);
 
     const handleQuizWeakWords = () => {
         const itemsToQuiz = sortedMistakes
-            .map(record => vocabularyList.find(v => v.id === record.id))
+            .map(entry => vocabularyList.find(v => v.id === entry.id))
             .filter((item): item is VocabItem => item !== undefined);
         startQuizFromWeakWords(itemsToQuiz);
     };
@@ -92,12 +92,13 @@ const WeakWords: React.FC<WeakWordsProps> = ({
                             <div className="col-span-2 text-right">{loc.mistake_history}</div>
                         </div>
                         <div className="divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
-                            {sortedMistakes.map(record => {
-                                const item = vocabularyList.find(v => v.id === record.id);
+                            {sortedMistakes.map(entry => {
+                                const item = vocabularyList.find(v => v.id === entry.id);
                                 if (!item) return null;
+                                const record = entry.record;
                                 const d = new Date(record.lastFailedAt);
                                 return (
-                                    <div key={record.id} className="grid grid-cols-12 py-4 px-6 gap-4 items-center hover:bg-slate-50 transition min-h-[64px]">
+                                    <div key={entry.id} className="grid grid-cols-12 py-4 px-6 gap-4 items-center hover:bg-slate-50 transition min-h-[64px]">
                                         <div className="col-span-1 font-mono text-slate-400">{item.id}</div>
                                         <div className="col-span-3 font-medium text-slate-900 leading-snug">{renderTextWithTarget(item.english_text)}</div>
                                         <div className="col-span-3 text-slate-600 leading-snug">{renderTextWithTarget(item.japanese_text)}</div>

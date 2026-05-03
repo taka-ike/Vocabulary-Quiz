@@ -10,7 +10,8 @@ interface QuizBreakProps {
     score: number;
     advanceToNextQuestion: () => void;
     reviewStack: VocabItem[];
-    startReview: (returnTo: AppState) => void;
+    fullQuizReviewHistory: VocabItem[];
+    startReview: (returnTo: AppState, useFullHistory?: boolean) => void;
     setAppState: (state: AppState) => void;
 }
 
@@ -21,6 +22,7 @@ const QuizBreak: React.FC<QuizBreakProps> = ({
     score,
     advanceToNextQuestion,
     reviewStack,
+    fullQuizReviewHistory,
     startReview,
     setAppState
 }) => {
@@ -42,6 +44,15 @@ const QuizBreak: React.FC<QuizBreakProps> = ({
                     >
                         {loc.continue_quiz} <ArrowRight size={18} />
                     </button>
+
+                    {fullQuizReviewHistory.length > 0 && (
+                        <button
+                            onClick={() => startReview('QUIZ_BREAK', true)}
+                            className="w-full py-4 bg-red-50 text-red-600 rounded-2xl font-bold hover:bg-red-100 shadow-sm border border-red-100 transition-colors flex items-center justify-center gap-2"
+                        >
+                            {loc.retry_mistakes.replace('{n}', fullQuizReviewHistory.length.toString())}
+                        </button>
+                    )}
 
                     {reviewStack.length > 0 && (
                         <button

@@ -1,6 +1,7 @@
 import React from 'react';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, Forward } from 'lucide-react';
 import { VocabItem, QuizMode } from '../types';
+import { Translations } from '../translations';
 
 interface ReviewProps {
     currentReviewItem: VocabItem | undefined;
@@ -11,7 +12,9 @@ interface ReviewProps {
     reviewInput: string;
     setReviewInput: (val: string) => void;
     handleReviewCheck: () => void;
+    handleReviewSkip: () => void;
     nextReviewQuestion: () => void;
+    loc: Translations;
 }
 
 const Review: React.FC<ReviewProps> = ({
@@ -23,7 +26,9 @@ const Review: React.FC<ReviewProps> = ({
     reviewInput,
     setReviewInput,
     handleReviewCheck,
-    nextReviewQuestion
+    handleReviewSkip,
+    nextReviewQuestion,
+    loc
 }) => {
     if (!currentReviewItem) return null;
 
@@ -39,17 +44,17 @@ const Review: React.FC<ReviewProps> = ({
 
     return (
         <div className="max-w-2xl mx-auto py-12 px-4 min-h-[80vh] flex flex-col">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8 sm:mb-8">Descriptive Review</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-8 sm:mb-8">{loc.desc_review}</h2>
 
             <div className="p-6 sm:p-10 bg-slate-50 rounded-2xl border border-slate-100 space-y-8 flex-1 flex flex-col">
                 <div className="text-center space-y-6 flex-1 flex flex-col justify-center">
                     <div className="space-y-4">
                         <span className="text-[11px] font-bold text-orange-500 uppercase tracking-widest">
-                            Review {reviewIdx + 1} of {reviewSessionItems.length}
+                            {loc.review_x_of_y.replace('{x}', (reviewIdx + 1).toString()).replace('{y}', reviewSessionItems.length.toString())}
                         </span>
 
                         <div className="text-center mb-2">
-                            <span className="text-slate-400 text-sm uppercase tracking-wider font-semibold">Translate this idea:</span>
+                            <span className="text-slate-400 text-sm uppercase tracking-wider font-semibold">{loc.translate_idea}</span>
                             <span className="font-reading text-slate-600 block mt-2 text-xl leading-relaxed">
                                 {hintParts.map((part, idx) =>
                                     idx % 2 === 1
@@ -88,16 +93,24 @@ const Review: React.FC<ReviewProps> = ({
 
                 <div className="mt-auto pt-6 border-t border-slate-200">
                     {!isReviewRevealed ? (
-                        <button
-                            onClick={handleReviewCheck}
-                            className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
-                        >
-                            Reveal Answer <CheckCircle2 size={18} />
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={handleReviewSkip}
+                                className="flex-1 py-4 bg-white text-slate-500 border border-slate-200 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
+                            >
+                                {loc.skip} <Forward size={18} />
+                            </button>
+                            <button
+                                onClick={handleReviewCheck}
+                                className="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-bold transition-all flex items-center justify-center gap-2"
+                            >
+                                {loc.reveal_answer} <CheckCircle2 size={18} />
+                            </button>
+                        </div>
                     ) : (
                         <div className="space-y-4">
                             <div className="text-center">
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Your Input</p>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{loc.your_input}</p>
                                 <p className={`text-xl font-reading font-bold ${reviewInput.trim().toLowerCase() === correctAnswer.toLowerCase() ? 'text-green-600' : 'text-red-500'}`}>
                                     {reviewInput || '(empty)'}
                                 </p>
@@ -106,7 +119,7 @@ const Review: React.FC<ReviewProps> = ({
                                 onClick={nextReviewQuestion}
                                 className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                             >
-                                {reviewIdx < reviewSessionItems.length - 1 ? 'Next Review' : 'Back to Results'} <ArrowRight size={18} />
+                                {reviewIdx < reviewSessionItems.length - 1 ? loc.next_review : loc.back_results} <ArrowRight size={18} />
                             </button>
                         </div>
                     )}
