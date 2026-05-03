@@ -32,7 +32,7 @@ Dictionary
         "id":"v2",
         "english_word":"apple",
         "part_of_speech":"名",
-        "japanese_meaning":"りんご"}
+        "japanese_meaning":"りんご"
     }
 ]
 ```
