@@ -26,13 +26,13 @@ Dictionary
         "id":"v1",
         "english_word":"normally",
         "part_of_speech":"副",
-        "japanese_meaning":"(文を修飾して) いつもは、普通は；普通に、通常は"}
+        "japanese_meaning":"(文を修飾して) いつもは、普通は；普通に、通常は"
     },
     {
         "id":"v2",
         "english_word":"apple",
         "part_of_speech":"名",
-        "japanese_meaning":"りんご"}
+        "japanese_meaning":"りんご"
     }
 ]
 ```
